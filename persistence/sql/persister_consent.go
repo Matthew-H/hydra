@@ -414,6 +414,16 @@ func (p *Persister) GetLogoutRequest(ctx context.Context, challenge string) (*co
 	return &lr, sqlcon.HandleError(p.Connection(ctx).Where("challenge = ? AND rejected = FALSE", challenge).First(&lr))
 }
 
+func (p *Persister) DeleteAccessTokensAfterLogoutRequest(ctx context.Context, subject string) error {
+	sqlQ := fmt.Sprintf("DELETE FROM %s WHERE subject=?", OAuth2RequestSQL{Table: "access"}.TableName())
+	return sqlcon.HandleError(p.Connection(ctx).RawQuery(sqlQ, subject).Exec())
+}
+
+func (p *Persister) DeleteRefreshTokensAfterLogoutRequest(ctx context.Context, subject string) error {
+	sqlQ := fmt.Sprintf("DELETE FROM %s WHERE subject=?", OAuth2RequestSQL{Table: "refresh"}.TableName())
+	return sqlcon.HandleError(p.Connection(ctx).RawQuery(sqlQ, subject).Exec())
+}
+
 func (p *Persister) VerifyAndInvalidateLogoutRequest(ctx context.Context, verifier string) (*consent.LogoutRequest, error) {
 	var lr consent.LogoutRequest
 	return &lr, p.transaction(ctx, func(ctx context.Context, c *pop.Connection) error {

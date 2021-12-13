@@ -979,6 +979,18 @@ func (s *DefaultStrategy) completeLogout(w http.ResponseWriter, r *http.Request)
 		return nil, err
 	}
 
+	//Let's delete access tokens for that subject for all clients
+	err = s.r.ConsentManager().DeleteAccessTokensAfterLogoutRequest(r.Context(), lr.Subject)
+	if err != nil {
+		return nil, err
+	}
+
+	//Let's delete refresh tokens for that subject for all clients
+	err = s.r.ConsentManager().DeleteRefreshTokensAfterLogoutRequest(r.Context(), lr.Subject)
+	if err != nil {
+		return nil, err
+	}
+
 	s.r.AuditLogger().
 		WithRequest(r).
 		WithField("subject", lr.Subject).
